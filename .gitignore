@@ -1,0 +1,8 @@
+# Veritabanı konfigürasyonu ve hassas bilgiler
+/config/config.php
+
+# Editör ve sistem dosyaları
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
