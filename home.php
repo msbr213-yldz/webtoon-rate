@@ -14,6 +14,14 @@ $selected_genres = array_filter($selected_genres, function($v) { return $v > 0; 
 
 $selected_status = trim($_GET['status'] ?? '');
 
+// Güvenli Metin Arama Yardımcısı (mbstring eklentisi olmasa dahi çökmez)
+$str_contains_custom = function($haystack, $needle) {
+    if (function_exists('mb_stripos')) {
+        return mb_stripos($haystack, $needle) !== false;
+    }
+    return stripos($haystack, $needle) !== false;
+};
+
 // 1. TÜRLERİ ÇEK
 $genres = $pdo->query("SELECT * FROM genres ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -241,7 +249,7 @@ include __DIR__ . '/includes/header.php';
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
                 <?php foreach ($found_users as $fu): ?>
                     <div class="col">
-                        <a href="<?= BASE_URL ?>/profile/profile.php?id=<?= $fu['id'] ?>" class="text-decoration-none">
+                        <a href="<?= BASE_URL ?>profile/profile.php?id=<?= $fu['id'] ?>" class="text-decoration-none">
                             <div class="card bg-body border shadow-sm p-3 rounded-3 h-100 d-flex flex-row align-items-center gap-3 clickable-card hover-lift">
                                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 48px; height: 48px; font-size: 1.2rem;">
                                     <?= strtoupper(substr($fu['username'], 0, 1)) ?>
@@ -467,11 +475,11 @@ include __DIR__ . '/includes/header.php';
 
                                 <div>
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <?php if (mb_stripos($status_str, 'Tamam') !== false || mb_stripos($status_str, 'Completed') !== false): ?>
+                                        <?php if ($str_contains_custom($status_str, 'Tamam') || $str_contains_custom($status_str, 'Completed')): ?>
                                             <span class="badge bg-info text-dark">Tamamlandı</span>
-                                        <?php elseif (mb_stripos($status_str, 'Ara') !== false || mb_stripos($status_str, 'Hiatus') !== false): ?>
+                                        <?php elseif ($str_contains_custom($status_str, 'Ara') || $str_contains_custom($status_str, 'Hiatus')): ?>
                                             <span class="badge bg-warning text-dark">Ara Verildi</span>
-                                        <?php elseif (mb_stripos($status_str, 'Yarıda') !== false || mb_stripos($status_str, 'Dropped') !== false): ?>
+                                        <?php elseif ($str_contains_custom($status_str, 'Yarıda') || $str_contains_custom($status_str, 'Dropped')): ?>
                                             <span class="badge bg-danger text-white">Yarıda Bırakıldı</span>
                                         <?php else: ?>
                                             <span class="badge bg-success">Devam Ediyor</span>
@@ -496,7 +504,6 @@ include __DIR__ . '/includes/header.php';
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

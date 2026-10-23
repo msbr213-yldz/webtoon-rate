@@ -16,6 +16,10 @@ $message_type = '';
 
 // HIZLI BÖLÜM GÜNCELLEME İŞLEMİ
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_chapter'])) {
+    if (function_exists('verify_csrf')) {
+        verify_csrf();
+    }
+    
     $webtoon_id = (int)($_POST['webtoon_id'] ?? 0);
     $new_chapter = (int)($_POST['total_chapters'] ?? 0);
 
@@ -98,6 +102,14 @@ $stmt = $pdo->query("
     ORDER BY {$order_sql}
 ");
 $webtoons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Güvenli Metin Arama Yardımcısı (mbstring eklentisi olmasa bile hatasız çalışır)
+$str_contains_custom = function($haystack, $needle) {
+    if (function_exists('mb_stripos')) {
+        return mb_stripos($haystack, $needle) !== false;
+    }
+    return stripos($haystack, $needle) !== false;
+};
 
 include __DIR__ . '/../includes/header.php';
 ?>
@@ -184,11 +196,11 @@ include __DIR__ . '/../includes/header.php';
                                     </td>
                                     <td><small class="text-body-secondary"><?= htmlspecialchars($w['genre_names'] ?? '-') ?></small></td>
                                     <td>
-                                        <?php if (mb_stripos($st_val, 'Tamam') !== false || mb_stripos($st_val, 'completed') !== false): ?>
+                                        <?php if ($str_contains_custom($st_val, 'Tamam') || $str_contains_custom($st_val, 'completed')): ?>
                                             <span class="badge bg-info text-dark">Tamamlandı</span>
-                                        <?php elseif (mb_stripos($st_val, 'Ara') !== false || mb_stripos($st_val, 'hiatus') !== false): ?>
+                                        <?php elseif ($str_contains_custom($st_val, 'Ara') || $str_contains_custom($st_val, 'hiatus')): ?>
                                             <span class="badge bg-warning text-dark">Ara Verildi</span>
-                                        <?php elseif (mb_stripos($st_val, 'Yarıda') !== false || mb_stripos($st_val, 'dropped') !== false): ?>
+                                        <?php elseif ($str_contains_custom($st_val, 'Yarıda') || $str_contains_custom($st_val, 'dropped')): ?>
                                             <span class="badge bg-danger">Yarıda Bırakıldı</span>
                                         <?php else: ?>
                                             <span class="badge bg-success">Devam Ediyor</span>
@@ -196,6 +208,9 @@ include __DIR__ . '/../includes/header.php';
                                     </td>
                                     <td>
                                         <form method="POST" class="d-flex align-items-center gap-2" style="max-width: 160px;">
+                                            <?php if (!empty($_SESSION['csrf_token'])): ?>
+                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                            <?php endif; ?>
                                             <input type="hidden" name="update_chapter" value="1">
                                             <input type="hidden" name="webtoon_id" value="<?= $w['id'] ?>">
                                             <input type="number" name="total_chapters" class="form-control form-control-sm theme-input" 
@@ -228,6 +243,5 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
