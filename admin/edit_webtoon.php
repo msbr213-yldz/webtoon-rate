@@ -58,11 +58,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Kapak görseli yükleme işlemi
         $cover_image = $webtoon['cover_image'];
         if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
-            $new_name = 'cover_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
-            $upload_path = __DIR__ . '/../uploads/' . $new_name;
-            if (move_uploaded_file($_FILES['cover_image']['tmp_name'], $upload_path)) {
-                $cover_image = $new_name;
+            $allowed = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'];
+            $ext  = strtolower(pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION));
+            $info = @getimagesize($_FILES['cover_image']['tmp_name']);
+            // Sadece gerçek görseller (en fazla 5 MB) kabul edilir
+            if (isset($allowed[$ext]) && $info !== false && $info['mime'] === $allowed[$ext] && $_FILES['cover_image']['size'] <= 5 * 1024 * 1024) {
+                $new_name = 'cover_' . bin2hex(random_bytes(8)) . '.' . $ext;
+                $upload_dir = __DIR__ . '/../uploads/';
+                if (!is_dir($upload_dir)) {
+                    mkdir($upload_dir, 0755, true);
+                }
+                $upload_path = $upload_dir . $new_name;
+                if (move_uploaded_file($_FILES['cover_image']['tmp_name'], $upload_path)) {
+                    $cover_image = $new_name;
+                }
             }
         }
 
@@ -287,5 +296,4 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

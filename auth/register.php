@@ -3,25 +3,31 @@ require_once __DIR__ . '/../config/config.php';
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $email    = trim($_POST['email']);
-    $password = trim($_POST['password']);
+    $username = trim($_POST['username'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
 
     if (!empty($username) && !empty($email) && !empty($password)) {
-        // Kullanıcı adı veya Email kontrolü
-        $stmt_check = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-        $stmt_check->execute([$username, $email]);
-
-        if ($stmt_check->fetch()) {
-            $message = $lang['username_email_taken'];
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $message = 'Geçerli bir e-posta adresi girin.';
+        } elseif (strlen($password) < 8) {
+            $message = 'Şifre en az 8 karakter olmalıdır.';
         } else {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt_ins = $pdo->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, 'user', NOW())");
-            if ($stmt_ins->execute([$username, $email, $hashed_password])) {
-                $_SESSION['flash_message'] = $lang['register_success'];
-                $_SESSION['flash_type']    = 'success';
-                header("Location: " . BASE_URL . "auth/login.php");
-                exit;
+            // Kullanıcı adı veya Email kontrolü
+            $stmt_check = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+            $stmt_check->execute([$username, $email]);
+
+            if ($stmt_check->fetch()) {
+                $message = $lang['username_email_taken'];
+            } else {
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt_ins = $pdo->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, 'user', NOW())");
+                if ($stmt_ins->execute([$username, $email, $hashed_password])) {
+                    $_SESSION['flash_message'] = $lang['register_success'];
+                    $_SESSION['flash_type']    = 'success';
+                    header("Location: " . BASE_URL . "auth/login.php");
+                    exit;
+                }
             }
         }
     } else {
@@ -52,7 +58,7 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
                 <div class="mb-4">
                     <label class="form-label fw-bold"><?= $lang['password'] ?></label>
-                    <input type="password" name="password" class="form-control" required>
+                    <input type="password" name="password" class="form-control" minlength="8" required>
                 </div>
                 <button type="submit" class="btn btn-success fw-bold w-100 py-2 mb-3"><?= $lang['register_btn'] ?></button>
                 <div class="text-center">

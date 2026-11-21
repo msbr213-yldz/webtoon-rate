@@ -24,7 +24,12 @@ if ($user_id > 0) {
     }
 }
 
-// Gelinen sayfaya (örneğin notifications.php veya bulunulan sayfaya) geri döndür
-$redirect = $_SERVER['HTTP_REFERER'] ?? (BASE_URL . 'notifications/notifications.php');
+// Gelinen sayfaya (sadece aynı domain ise) geri döndür
+$fallback = BASE_URL . 'notifications/notification.php';
+$referer  = $_SERVER['HTTP_REFERER'] ?? '';
+$ref_host = parse_url($referer, PHP_URL_HOST);
+$own_host = parse_url(BASE_URL, PHP_URL_HOST);
+
+$redirect = ($ref_host && $own_host && strcasecmp($ref_host, $own_host) === 0) ? $referer : $fallback;
 header("Location: " . $redirect);
 exit;

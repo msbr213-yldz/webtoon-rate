@@ -28,12 +28,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $cover_image = trim($_POST['cover_image'] ?? '');
-    $status = trim($_POST['status'] ?? 'Devam Ediyor');
+
+    // Bilgisayardan kapak görseli yüklendiyse onu kullan (URL'ye öncelikli)
+    if (isset($_FILES['cover_file']) && $_FILES['cover_file']['error'] === UPLOAD_ERR_OK) {
+        $allowed = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'];
+        $ext  = strtolower(pathinfo($_FILES['cover_file']['name'], PATHINFO_EXTENSION));
+        $info = @getimagesize($_FILES['cover_file']['tmp_name']);
+        if (isset($allowed[$ext]) && $info !== false && $info['mime'] === $allowed[$ext] && $_FILES['cover_file']['size'] <= 5 * 1024 * 1024) {
+            $upload_dir = __DIR__ . '/../uploads/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            $new_name = 'cover_' . bin2hex(random_bytes(8)) . '.' . $ext;
+            if (move_uploaded_file($_FILES['cover_file']['tmp_name'], $upload_dir . $new_name)) {
+                $cover_image = $new_name;
+            }
+        } else {
+            $error = 'Geçersiz görsel formatı veya 5 MB boyut sınırı aşıldı.';
+        }
+    }
+
+    $status = trim($_POST['status'] ?? 'ongoing');
     $current_chapter = (int)($_POST['current_chapter'] ?? 1);
     $total_chapters = (int)($_POST['total_chapters'] ?? 0);
     $selected_genres = $_POST['genres'] ?? [];
 
-    if (empty($title)) {
+    if (!empty($error)) {
+        // Dosya doğrulama hatası zaten ayarlandı
+    } elseif (empty($title)) {
         $error = 'Lütfen webtoon başlığını girin.';
     } else {
         try {
@@ -113,7 +135,7 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- Sol Taraf: Ekleme Formu -->
         <div class="col-lg-8">
             <div class="card bg-body-tertiary border shadow-sm rounded-4 p-4">
-                <form action="" method="POST">
+                <form action="" method="POST" enctype="multipart/form-data">
                     
                     <div class="mb-3">
                         <label for="title" class="form-label fw-bold text-body">Webtoon Başlığı</label>
@@ -133,13 +155,20 @@ require_once __DIR__ . '/../includes/header.php';
                                value="<?= htmlspecialchars($_POST['cover_image'] ?? '') ?>" placeholder="https://image-url.com/cover.jpg veya dosya adı">
                     </div>
 
+                    <div class="mb-3">
+                        <label for="cover_file" class="form-label fw-bold text-body">veya Bilgisayardan Kapak Yükle</label>
+                        <input type="file" class="form-control theme-input" id="cover_file" name="cover_file" accept="image/*">
+                        <div class="form-text">JPG, PNG, WEBP veya GIF (en fazla 5 MB). Dosya seçersen URL yerine bu görsel kullanılır.</div>
+                    </div>
+
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label for="status" class="form-label fw-bold text-body">Yayın Durumu</label>
                             <select class="form-select theme-input" id="status" name="status">
-                                <option value="Devam Ediyor" <?= (($_POST['status'] ?? '') === 'Devam Ediyor') ? 'selected' : '' ?>>Devam Ediyor</option>
-                                <option value="Ara Verdi" <?= (($_POST['status'] ?? '') === 'Ara Verdi') ? 'selected' : '' ?>>Ara Verdi</option>
-                                <option value="Bitti" <?= (($_POST['status'] ?? '') === 'Bitti') ? 'selected' : '' ?>>Bitti</option>
+                                <option value="ongoing" <?= (($_POST['status'] ?? '') === 'ongoing') ? 'selected' : '' ?>>Devam Ediyor</option>
+                                <option value="hiatus" <?= (($_POST['status'] ?? '') === 'hiatus') ? 'selected' : '' ?>>Ara Verildi</option>
+                                <option value="completed" <?= (($_POST['status'] ?? '') === 'completed') ? 'selected' : '' ?>>Tamamlandı</option>
+                                <option value="dropped" <?= (($_POST['status'] ?? '') === 'dropped') ? 'selected' : '' ?>>Yarıda Bırakıldı</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -235,5 +264,4 @@ function searchExternal(platform) {
 
 <!-- Bootstrap JS Paket Dosyası -->
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

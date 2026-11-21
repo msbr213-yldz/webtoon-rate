@@ -121,13 +121,21 @@ if ($action === 'give_badge') {
         $b_stmt->execute(['id' => $badge_id]);
         $badge_name = $b_stmt->fetchColumn() ?: 'Ödül';
 
-        // Rozeti Ekle
-        $ins = $pdo->prepare("INSERT INTO comment_badges (comment_id, giver_id, badge_id) VALUES (:c_id, :g_id, :b_id)");
-        $ins->execute([
-            'c_id' => $comment_id,
-            'g_id' => $user_id,
-            'b_id' => $badge_id
-        ]);
+        // Rozeti Ekle (aynı rozet aynı yoruma ikinci kez verilemez - UNIQUE kuralı)
+        try {
+            $ins = $pdo->prepare("INSERT INTO comment_badges (comment_id, giver_id, badge_id) VALUES (:c_id, :g_id, :b_id)");
+            $ins->execute([
+                'c_id' => $comment_id,
+                'g_id' => $user_id,
+                'b_id' => $badge_id
+            ]);
+        } catch (PDOException $e) {
+            if ((int)($e->errorInfo[1] ?? 0) === 1062) { // 1062 = Duplicate entry
+                echo json_encode(['success' => false, 'message' => 'Bu rozeti bu yoruma zaten verdiniz.']);
+                exit;
+            }
+            throw $e;
+        }
 
         // ROZET / ÖDÜL BİLDİRİMİ GÖNDERME
         if ($owner_id > 0) {

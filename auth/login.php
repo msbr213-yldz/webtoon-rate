@@ -9,8 +9,8 @@ if (isset($_SESSION['flash_message'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login_input = trim($_POST['login_input']);
-    $password    = trim($_POST['password']);
+    $login_input = trim($_POST['login_input'] ?? '');
+    $password    = trim($_POST['password'] ?? '');
 
     if (!empty($login_input) && !empty($password)) {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password'])) {
+            session_regenerate_id(true);
             $_SESSION['user_id']  = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role']     = $user['role'];

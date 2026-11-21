@@ -109,3 +109,35 @@ if (!function_exists('sendStatusChangeNotification')) {
         }
     }
 }
+
+// --- CSRF KORUMASI: POST istekleri sadece sitenin kendisinden gelebilir ---
+if (!function_exists('is_same_origin_request')) {
+    function is_same_origin_request(): bool {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            return true;
+        }
+        $source = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
+        if ($source === '') {
+            return true; // Tarayıcı kaynak bilgisi göndermemişse engelleme
+        }
+        $source_host = parse_url($source, PHP_URL_HOST);
+        $own = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '';
+        $own = trim(explode(',', $own)[0]);
+        $own_host = parse_url('//' . $own, PHP_URL_HOST);
+        if (!$source_host || !$own_host) {
+            return false;
+        }
+        return strcasecmp($source_host, $own_host) === 0;
+    }
+}
+
+if (!function_exists('verify_csrf')) {
+    function verify_csrf(): void {
+        if (!is_same_origin_request()) {
+            http_response_code(403);
+            exit('Geçersiz istek kaynağı.');
+        }
+    }
+}
+
+verify_csrf();

@@ -158,5 +158,4 @@ require_once __DIR__ . '/../includes/header.php';
 
 <!-- Bootstrap 5 JS Bundle (Sağ Butonların/Dropdown'ların Çalışması İçin Şart) -->
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

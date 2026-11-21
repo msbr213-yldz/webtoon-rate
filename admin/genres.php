@@ -42,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_genre'])) {
     }
 }
 
-// Tür Silme
-if (isset($_GET['delete'])) {
-    $delete_id = (int)$_GET['delete'];
+// Tür Silme (POST + CSRF korumalı)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_genre_id'])) {
+    $delete_id = (int)$_POST['delete_genre_id'];
     if ($delete_id > 0) {
         $pdo->prepare("DELETE FROM webtoon_genres WHERE genre_id = ?")->execute([$delete_id]);
         $pdo->prepare("DELETE FROM genres WHERE id = ?")->execute([$delete_id]);
@@ -139,9 +139,12 @@ require_once __DIR__ . '/../includes/header.php';
                                     <td><strong class="text-body fs-6"><?= htmlspecialchars($g['name']) ?></strong></td>
                                     <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3"><?= (int)$g['total_webtoons'] ?> Webtoon</span></td>
                                     <td class="text-end">
-                                        <a href="<?= BASE_URL ?>admin/genres.php?delete=<?= $g['id'] ?>" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('<?= $lang['confirm_delete'] ?? 'Bu türü silmek istediğinize emin misiniz?' ?>');">
-                                            <i class="bi bi-trash me-1"></i> <?= $lang['btn_delete'] ?? 'Sil' ?>
-                                        </a>
+                                        <form method="POST" action="<?= BASE_URL ?>admin/genres.php" class="d-inline" onsubmit="return confirm('<?= $lang['confirm_delete'] ?? 'Bu türü silmek istediğinize emin misiniz?' ?>');">
+                                            <input type="hidden" name="delete_genre_id" value="<?= $g['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                <i class="bi bi-trash me-1"></i> <?= $lang['btn_delete'] ?? 'Sil' ?>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -156,5 +159,4 @@ require_once __DIR__ . '/../includes/header.php';
 
 <!-- BOOTSTRAP JS PAKETİ (Düzgün Çözüm: Alt Klasördeki Dropdown ve Tema Butonlarını Aktifleştirir) -->
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

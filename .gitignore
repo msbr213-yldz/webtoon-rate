@@ -1,6 +1,10 @@
 # Veritabanı konfigürasyonu ve hassas bilgiler
 /config/config.php
 
+# Yüklenen görseller
+/uploads/*
+!/uploads/.gitkeep
+
 # Editör ve sistem dosyaları
 .DS_Store
 Thumbs.db

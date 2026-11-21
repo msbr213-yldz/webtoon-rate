@@ -41,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_chapter'])) {
     }
 }
 
-// WEBTOON SILME İŞLEMİ
-if (isset($_GET['delete_id'])) {
-    $delete_id = (int)$_GET['delete_id'];
+// WEBTOON SILME İŞLEMİ (POST + CSRF korumalı)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $delete_id = (int)$_POST['delete_id'];
     if ($delete_id > 0) {
         $stmt = $pdo->prepare("DELETE FROM webtoons WHERE id = :id");
         $stmt->execute(['id' => $delete_id]);
@@ -227,11 +227,12 @@ include __DIR__ . '/../includes/header.php';
                                         <a href="<?= BASE_URL ?>admin/edit_webtoon.php?id=<?= $w['id'] ?>" class="btn btn-sm btn-outline-primary me-1">
                                             <i class="bi bi-pencil-square"></i> Düzenle
                                         </a>
-                                        <a href="<?= BASE_URL ?>admin/manage_webtoons.php?delete_id=<?= $w['id'] ?>" 
-                                           class="btn btn-sm btn-outline-danger" 
-                                           onclick="return confirm('Bu webtoonu silmek istediğinize emin misiniz?');">
-                                            <i class="bi bi-trash"></i> Sil
-                                        </a>
+                                        <form method="POST" class="d-inline" onsubmit="return confirm('Bu webtoonu silmek istediğinize emin misiniz?');">
+                                            <input type="hidden" name="delete_id" value="<?= $w['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Sil
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -243,5 +244,4 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_URL . 'auth/login.php');
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
+    header('Location: ' . BASE_URL . 'home.php');
     exit;
 }
 
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // 3. Kullanıcıya Gönderilecek Bildirim Mesajını Oluştur
                 $notification_msg = '';
-                $webtoon_title = htmlspecialchars($req_data['title']);
+                $webtoon_title = $req_data['title'];
 
                 if ($status === 'approved') {
                     $notification_msg = "🎉 Tebrikler! '{$webtoon_title}' adlı webtoon isteğiniz kabul edildi ve siteye eklendi.";
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Eğer admin notu varsa bildirime ekle
                 if (!empty($admin_note) && !empty($notification_msg)) {
-                    $notification_msg .= " (Admin Notu: " . htmlspecialchars($admin_note) . ")";
+                    $notification_msg .= " (Admin Notu: " . $admin_note . ")";
                 }
 
                 // 4. Bildirimi Veritabanına Kaydet (Sadece onaylandı veya reddedildiyse)
@@ -207,7 +207,6 @@ $requests = $pdo->query($query)->fetchAll();
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function openEditModal(id, title, status, note) {
     document.getElementById('modalRequestId').value = id;
@@ -219,5 +218,4 @@ function openEditModal(id, title, status, note) {
     editModal.show();
 }
 </script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

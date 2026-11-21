@@ -261,7 +261,16 @@ include __DIR__ . '/includes/header.php';
                     </p>
 
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <span class="badge bg-success fs-6"><?= htmlspecialchars($webtoon['status'] ?? 'Devam Ediyor') ?></span>
+                        <?php
+                            $st = strtolower($webtoon['status'] ?? 'ongoing');
+                            [$st_label, $st_class] = match ($st) {
+                                'completed' => ['Tamamlandı', 'bg-info text-dark'],
+                                'hiatus'    => ['Ara Verildi', 'bg-warning text-dark'],
+                                'dropped'   => ['Yarıda Bırakıldı', 'bg-danger'],
+                                default     => ['Devam Ediyor', 'bg-success'],
+                            };
+                        ?>
+                        <span class="badge <?= $st_class ?> fs-6"><?= $st_label ?></span>
                         <span class="badge bg-secondary fs-6">Toplam Bölüm: <?= $total_chapters ?></span>
                         
                         <!-- Genel Ortalama Puan -->
@@ -482,8 +491,6 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <!-- BİLDİRİMDEN GELEN YORUMA ODAKLANMA VE VURGULAMA KODU -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -588,5 +595,4 @@ function giveBadge(badgeId) {
     });
 }
 </script>
-</body>
-</html>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

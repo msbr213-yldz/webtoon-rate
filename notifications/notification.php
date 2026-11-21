@@ -109,7 +109,7 @@ if (isset($_GET['read'])) {
 }
 
 // BİLDİRİMLERİ ÇEKME
-$filter = $_GET['filter'] ?? 'all';
+$filter = ($_GET['filter'] ?? 'all') === 'unread' ? 'unread' : 'all';
 $query = "SELECT * FROM notifications WHERE user_id = :u_id";
 
 if ($filter === 'unread') {
@@ -230,5 +230,4 @@ require_once __DIR__ . '/../includes/header.php';
 
 </div>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
